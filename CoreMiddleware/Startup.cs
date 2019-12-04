@@ -28,22 +28,26 @@ namespace CoreMiddleware
             {
                 app.UseDeveloperExceptionPage();
             }
+            
+           
+
             app.UseStaticFiles();
-
-
-            app.UseMiddleware<SampleMiddleware>();
 
             app.Use(async (context, next) =>
             {
                 Stopwatch sw = Stopwatch.StartNew();
+                
                 logger.LogInformation($"--- from middle ware start");
                 await next();
                 logger.LogInformation($"--- from middle ware start. elapsed : {sw.ElapsedMilliseconds}");
             }
             );
+            app.UseMiddleware<SampleMiddleware>();
 
             app.Run(async (context) =>
             {
+                context.Response.ContentType = "text/html";
+
                 await context.Response.WriteAsync("Hello World!");
             });
         }
