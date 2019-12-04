@@ -28,8 +28,8 @@ namespace CoreMiddleware
             {
                 app.UseDeveloperExceptionPage();
             }
-            
-           
+
+            app.UseMiddleware<SampleMiddleware>();//because UseStaticFiles is terminating if we want adding custom headers we should put it before UseStaticFiles . but still it cannot inject content to fixed static html
 
             app.UseStaticFiles();
 
@@ -42,14 +42,34 @@ namespace CoreMiddleware
                 logger.LogInformation($"--- from middle ware start. elapsed : {sw.ElapsedMilliseconds}");
             }
             );
-            app.UseMiddleware<SampleMiddleware>();
 
-            app.Run(async (context) =>
+            //app.Map("/Stuff", a => a.Run(MapStuff));
+            app.Map("/Stuff", a=> a.Run(async (context) =>            {
+                context.Response.ContentType = "text/html";
+                await context.Response.WriteAsync("Hello World!");
+            })
+            );
+
+            //app.UseAuthentication();
+            app.MapWhen(c=>c.Request.Headers["User-Agent"].Contains("chrome"),routeChrome);
+            app.Run(  async (context) =>
             {
                 context.Response.ContentType = "text/html";
 
                 await context.Response.WriteAsync("Hello World!");
             });
+        }
+
+        private void routeChrome(IApplicationBuilder app)
+        {
+            app.Run(async c => await c.Response.WriteAsync("Chrome response mapped"));
+        }
+
+        private async Task MapStuff(HttpContext context)
+        {
+
+            context.Response.ContentType = "text/html";
+            await context.Response.WriteAsync("Here is your stuff content");
         }
     }
 }
